@@ -1,0 +1,23 @@
+запрос, выводящий полное имя и баланс человека на данный момент:
+
+SELECT 100 - IFNULL(minus.amount, 0) + IFNULL(plus.amount, 0) , fullname FROM  persons
+left join (SELECT SUM(amount ) as amount, to_person_id FROM persons inner join transactions ON to_person_id = id GROUP BY to_person_id ) AS plus ON plus.to_person_id = persons.id
+left join (SELECT SUM(amount ) as amount, from_person_id FROM persons inner join transactions ON from_person_id = id GROUP BY from_person_id ) AS minus ON minus.from_person_id = persons.id
+
+
+запрос выводящий город, представители которого участвовали в передаче денег наибольшее количество раз
+
+SELECT cities.name FROM cities
+inner join (SELECT persons.fullname , persons.city_id FROM persons inner join (SELECT transactions.from_person_id , COUNT(transactions.from_person_id) AS countfrompersone FROM transactions
+inner join (SELECT transactions.to_person_id AS topers , COUNT(transactions.to_person_id) AS counttopersone FROM transactions GROUP BY transactions.to_person_id) AS toperstrans
+ON transactions.from_person_id = toperstrans.topers
+GROUP BY transactions.from_person_id HAVING countfrompersone > 1) AS comb ON comb.from_person_id = persons.id) AS personmaxoperation
+ON personmaxoperation.city_id = cities.id
+
+
+запрос, выводящий все транзакции, где передача денег осуществлялась между представителями одного города
+
+SELECT transactions.* FROM transactions
+inner join persons as p ON transactions.from_person_id = p.id
+inner join persons as p1 ON transactions.to_person_id  = p1.id
+WHERE p.city_id = p1.city_id
